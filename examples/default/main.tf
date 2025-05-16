@@ -5,10 +5,6 @@ terraform {
       source  = "hashicorp/azurerm"
       version = ">= 4.0.0, < 5.0.0"
     }
-    random = {
-      source  = "hashicorp/random"
-      version = ">= 3.5.0, < 4.0.0"
-    }
   }
 }
 
@@ -20,21 +16,6 @@ provider "azurerm" {
   }
 }
 
-
-## Section to provide a random Azure region for the resource group
-# This allows us to randomize the region for the resource group.
-module "regions" {
-  source  = "Azure/regions/azurerm"
-  version = "~> 0.8"
-}
-
-# This allows us to randomize the region for the resource group.
-resource "random_integer" "region_index" {
-  max = length(module.regions.regions) - 1
-  min = 0
-}
-## End of section to provide a random Azure region for the resource group
-
 # This ensures we have unique CAF compliant names for our resources.
 module "naming" {
   source  = "Azure/naming/azurerm"
@@ -43,7 +24,7 @@ module "naming" {
 
 # This is required for resource modules
 resource "azurerm_resource_group" "this" {
-  location = module.regions.regions_by_name.eastus.name
+  location = "East US 2" # Hardcoded because we have to test in a region with availability zones
   name     = module.naming.resource_group.name_unique
 }
 
@@ -58,11 +39,12 @@ resource "azurerm_user_assigned_identity" "this" {
 # Leaving location as `null` will cause the module to use the resource group location
 # with a data source.
 module "test" {
-  source                                      = "../../"
-  kubernetes_version                          = "1.30"
-  enable_telemetry                            = var.enable_telemetry # see variables.tf
+  source = "../../"
+
+  location                                    = azurerm_resource_group.this.location
   name                                        = module.naming.kubernetes_cluster.name_unique
   resource_group_name                         = azurerm_resource_group.this.name
+  enable_telemetry                            = var.enable_telemetry # see variables.tf
+  kubernetes_version                          = "1.30"
   user_assigned_managed_identity_resource_ids = [azurerm_user_assigned_identity.this.id]
-  location                                    = module.regions.regions_by_name.eastus.name
 }
