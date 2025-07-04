@@ -14,6 +14,8 @@ provider "azurerm" {
       prevent_deletion_if_contains_resources = false
     }
   }
+  subscription_id = "4b833d96-11d2-43bf-ac69-7baf7305341b"
+  tenant_id       = "0e0c2c6b-835a-4d45-8a92-4fac0d3be692"
 }
 
 # This ensures we have unique CAF compliant names for our resources.
@@ -24,7 +26,7 @@ module "naming" {
 
 # This is required for resource modules
 resource "azurerm_resource_group" "this" {
-  location = "East US 2" # Hardcoded because we have to test in a region with availability zones
+  location = "westeurope" # Hardcoded because we have to test in a region with availability zones
   name     = module.naming.resource_group.name_unique
 }
 
